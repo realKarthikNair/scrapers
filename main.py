@@ -1,9 +1,12 @@
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
-import time
-from urllib.parse import urljoin
+import subprocess
 
+def install_requirements(requirements_file):
+    try:
+        subprocess.check_call(['pip', 'install', '-r', requirements_file])
+        print("Requirements installed successfully.")
+        return True
+    except subprocess.CalledProcessError:
+        print("Failed to install requirements.")
 
 class AmazonScraper:
     def __init__(self, base_url, user_agent):
@@ -104,7 +107,17 @@ def scrape_and_save_data(base_url, num_pages):
 
 
 if __name__ == "__main__":
-    base_url = 'https://www.amazon.in/s?k=bags&crid=2M096C61O4MLT&qid=1653308124&sprefix=ba%2Caps%2C283&ref=sr_pg_1'
-    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
-    num_pages = 20
-    scrape_and_save_data(base_url, num_pages)
+    requirements_file = "requirements.txt"  # Replace with the actual path to your requirements.txt file
+    if install_requirements(requirements_file):
+        import requests
+        from bs4 import BeautifulSoup
+        import pandas as pd
+        import time
+        from urllib.parse import urljoin
+        base_url = 'https://www.amazon.in/s?k=bags&crid=2M096C61O4MLT&qid=1653308124&sprefix=ba%2Caps%2C283&ref=sr_pg_1'
+        user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
+        num_pages = 20
+        scrape_and_save_data(base_url, num_pages)
+    else:
+        print("Failed to install requirements. Exiting.")
+        exit(1)
