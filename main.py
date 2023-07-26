@@ -24,19 +24,17 @@ class AmazonScraper:
             print("Request Exception:", e)
             return None
 
+    
     def scrape_product_listing_page(self, page_num):
         url = f"{self.base_url}&page={page_num}"
         soup = self.get_soup(url)
         product_urls = []
 
         for item in soup.find_all('a', {'class': ['a-link-normal', 's-underline-text', 's-underline-link-text', 's-link-style', 'a-text-normal']}):
-            if 'href' in item.attrs:
+            if 'href' in item.attrs and 'aria-hidden' not in item.attrs:
                 product_url = item.attrs['href']
                 full_product_url = urljoin('https://www.amazon.in/', product_url)
-                
-                
-                if 'Sponsored ad' not in item.attrs.get('aria-label', ''):
-                    product_urls.append(full_product_url)
+                product_urls.append(full_product_url)
 
         return product_urls
 
@@ -93,7 +91,7 @@ def scrape_and_save_data(base_url, num_pages):
             all_data.append(product_data)
             
             print(f"Scraped {product_url}")
-            time.sleep(1)
+            # time.sleep(1)
             if len(all_data)>20:
                 break
 
