@@ -1,4 +1,6 @@
 import subprocess
+import json
+import argparse
 
 def install_requirements(requirements_file):
     try:
@@ -9,6 +11,7 @@ def install_requirements(requirements_file):
         print("Failed to install requirements.")
 
 class AmazonScraper:
+
     def __init__(self, base_url, user_agent):
         self.base_url = base_url
         self.headers = {
@@ -16,6 +19,9 @@ class AmazonScraper:
         }
 
     def get_soup(self, url):
+        """
+        Returns BeautifulSoup object for a given URL
+        """
         try:
             response = requests.get(url, headers=self.headers)
             response.raise_for_status()  # Raise an exception for HTTP errors (e.g., 404, 500)
@@ -27,54 +33,85 @@ class AmazonScraper:
             print("Request Exception:", e)
             return None
 
-    
+
+
     def scrape_product_listing_page(self, page_num):
+        """
+        Scrapes a product listing page and returns a list of product info and product URLs
+        """
         url = f"{self.base_url}&page={page_num}"
         soup = self.get_soup(url)
-        product_urls = []
+        products = []
 
-        for item in soup.find_all('a', {'class': ['a-link-normal', 's-underline-text', 's-underline-link-text', 's-link-style', 'a-text-normal']}):
-            if 'href' in item.attrs and 'aria-hidden' not in item.attrs:
-                product_url = item.attrs['href']
-                full_product_url = urljoin('https://www.amazon.in/', product_url)
-                product_urls.append(full_product_url)
+        for item in soup.find_all('div', {'data-component-type': 's-search-result'}):
+            product = {}
 
-        return product_urls
+            title_tag = item.find('h2', class_='a-size-mini')
+            if title_tag:
+                product['url'] = "https://www.amazon.in" + title_tag.find('a', class_='a-link-normal')['href']
+                product['name'] = title_tag.find('span', class_='a-text-normal').text.strip()
+
+            rating_tag = item.find('span', class_='a-icon-alt')
+            if rating_tag:
+                product['rating'] = rating_tag.text.split()[0]
+
+            price_tag = item.find('span', class_='a-price')
+            if price_tag:
+                product['price'] = price_tag.find('span', class_='a-offscreen').text.replace('\u20b9', '').strip()
+
+            num_reviews_tag = item.find('span', class_='a-size-base')
+            if num_reviews_tag:
+                product['num_reviews'] = num_reviews_tag.text.strip()
+
+            products.append(product)
+
+        # with open('products.json', 'w') as f:
+        #     json.dump(products, f, indent=4)
+
+        return products
 
     
     def scrape_product_page(self, url):
+        """
+        Scrapes a product page and returns a dictionary of product info
+        """
         soup = self.get_soup(url)
 
         if not soup:
             return None
 
-        product_name_elem = soup.find('span', {'id': 'productTitle'})
-        product_name = product_name_elem.get_text().strip() if product_name_elem else None
+        # description_elem = soup.find('div', {'id': 'productDescription'})
+        # description = description_elem.get_text().strip() if description_elem else None
 
-        product_price_elem = soup.find('span', {'id': 'priceblock_ourprice'})
-        product_price = product_price_elem.get_text().strip() if product_price_elem else None
+        # Find ASIN
+        asin_elem = soup.find('div', {'id': 'acBadge_feature_div'})
+        asin = None
+        if asin_elem:
+            script_tag = asin_elem.find('script', type='a-state')
+            if script_tag:
+                script_content = script_tag.contents[0].strip()
+                asin = script_content.split('{"acAsin":"')[-1].split('"}')[0]
+            else:
+                asin = None
+        else:
+            asin = None
 
-        rating_elem = soup.find('span', {'class': 'a-icon-alt'})
-        rating = rating_elem.get_text().strip().split()[0] if rating_elem else None
-
-        num_reviews_elem = soup.find('span', {'id': 'acrCustomerReviewText'})
-        num_reviews = num_reviews_elem.get_text().strip().split()[0] if num_reviews_elem else None
-
+        # Find Description
         description_elem = soup.find('div', {'id': 'productDescription'})
-        description = description_elem.get_text().strip() if description_elem else None
+        if description_elem:
+            description = description_elem.get_text().strip()
+        else:
+            description = None
 
-        asin_elem = soup.find('th', string='ASIN')
-        asin = asin_elem.find_next('td').get_text().strip() if asin_elem else None
-
-        manufacturer_elem = soup.find('th', string='Manufacturer')
-        manufacturer = manufacturer_elem.find_next('td').get_text().strip() if manufacturer_elem else None
+        # Find Manufacturer
+        title_block_left_section = soup.find('div', {'id': 'titleBlockLeftSection'})
+        if title_block_left_section:
+            manufacturer_elem = title_block_left_section.find('a', {'id': 'bylineInfo'})
+            manufacturer = manufacturer_elem.get_text().strip().replace('Brand: ', '') if manufacturer_elem else None
+        else:
+            manufacturer = None
 
         return {
-            #'Product URL': url,
-            'Product Name': product_name,
-            'Product Price': product_price,
-            'Rating': rating,
-            'Number of Reviews': num_reviews,
             'Description': description,
             'ASIN': asin,
             'Manufacturer': manufacturer
@@ -82,28 +119,41 @@ class AmazonScraper:
 
 
 def scrape_and_save_data(base_url, num_pages):
-    all_data = []
+    """
+    Scrapes and saves data to a CSV file
+    """
 
     amazon_scraper = AmazonScraper(base_url, user_agent)
-
+    all_data = [] 
     for page_num in range(1, num_pages + 1):
-        product_urls = amazon_scraper.scrape_product_listing_page(page_num)
+         
+        products_data = amazon_scraper.scrape_product_listing_page(page_num)
 
-        for product_url in product_urls:
+        # product_data is a list with each element being a dictionary of product info. url key has the product URL
+        
+        for i in products_data:
+
+            if i['num_reviews'] == "M.R.P:": 
+                i['num_reviews'] = None
+            
+            if i['price'] != None:
+                i['price'] = int(i['price'].replace(',', ''))
+
+            product_url = i['url']
             product_data = amazon_scraper.scrape_product_page(product_url)
-            all_data.append(product_data)
+            all_data.append({**i, **product_data})
+            # replace any empty values with None
+            for key, value in all_data[-1].items():
+                if value == '':
+                    all_data[-1][key] = None
             
             print(f"Scraped {product_url}")
-            # time.sleep(1)
-        #     if len(all_data)>2:
-        #         break
+            
+        df = pd.DataFrame(all_data)
+   
 
-        # if len(all_data)>2:
-        #         break
-
-    df = pd.DataFrame(all_data)
-    df.to_csv('amazon_products_data.csv', index=False)
-    print("Data scraped and saved successfully.")
+    df.to_csv('products_data.csv', index=False)
+  
 
 
 if __name__ == "__main__":
