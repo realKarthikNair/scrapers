@@ -6,10 +6,10 @@ from urllib.parse import urljoin
 
 
 class AmazonScraper:
-    def __init__(self, base_url):
+    def __init__(self, base_url, user_agent):
         self.base_url = base_url
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
+            'User-Agent': user_agent
         }
 
     def get_soup(self, url):
@@ -81,7 +81,7 @@ class AmazonScraper:
 def scrape_and_save_data(base_url, num_pages):
     all_data = []
 
-    amazon_scraper = AmazonScraper(base_url)
+    amazon_scraper = AmazonScraper(base_url, user_agent)
 
     for page_num in range(1, num_pages + 1):
         product_urls = amazon_scraper.scrape_product_listing_page(page_num)
@@ -92,8 +92,11 @@ def scrape_and_save_data(base_url, num_pages):
             
             print(f"Scraped {product_url}")
             # time.sleep(1)
-            if len(all_data)>20:
-                break
+        #     if len(all_data)>2:
+        #         break
+
+        # if len(all_data)>2:
+        #         break
 
     df = pd.DataFrame(all_data)
     df.to_csv('amazon_products_data.csv', index=False)
@@ -102,5 +105,6 @@ def scrape_and_save_data(base_url, num_pages):
 
 if __name__ == "__main__":
     base_url = 'https://www.amazon.in/s?k=bags&crid=2M096C61O4MLT&qid=1653308124&sprefix=ba%2Caps%2C283&ref=sr_pg_1'
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
     num_pages = 20
     scrape_and_save_data(base_url, num_pages)
