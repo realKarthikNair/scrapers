@@ -27,7 +27,12 @@ class AmazonScraper:
             response.raise_for_status()  # Raise an exception for HTTP errors (e.g., 404, 500)
             return BeautifulSoup(response.content, 'html.parser')
         except ConnectionError as e:
-            print("Connection Error:", e)
+            print(f'''Can't connect to {url}.split('/')[2]
+            What you can do:
+            - Check your internet connection
+            - Try changing the user agent string [--user-agent or -a argument
+            - If you are using a VPN or proxy, try turning it off
+            ''')
             return None
         except requests.exceptions.RequestException as e:
             print("Request Exception:", e)
@@ -153,6 +158,17 @@ def scrape_and_save_data(base_url, num_pages):
    
 
     df.to_csv('products_data.csv', index=False)
+
+# This function will be replaced with regex later
+# def check_url(url):
+#     # add https if not present
+#     if not url.startswith('https://'):
+#         url = 'https://' + url
+#     url_b = url1.split("&")[0].split("/")
+#     url_c = url1.split("&")[1].split("&")
+#     if url_b[2] == "www.amazon.in":
+#         if url_b[3][3:].isalphanum() and url_b[3][:2] == "s?":
+#             if url
   
 
 
@@ -164,7 +180,18 @@ if __name__ == "__main__":
     parser.add_argument('-a', '--user-agent', help="user agent string to use for scraping \n default is Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36")
     parser.add_argument('-f', '--file', help="File name to save scraped data to \n default is products_data.csv")
     args = parser.parse_args()
-    requirements_file = "requirements.txt"  # Replace with the actual path to your requirements.txt file
+    requirements_file = "requirements.txt"
+    if args.url:
+        base_url = args.url
+    else:
+        while True:
+            base_url = input("Enter base URL for product search results: ")
+            # check if base URL is in format https://www.amazon.in/s?k=bags&crid=2M096C61O4MLT&qid=1653308124&sprefix=ba%2Caps%2C283&ref=sr_pg_1
+            # if not check_url(base_url):
+            #     print("Please enter a valid URL")
+            if not base_url:
+                print("Please enter a valid URL")
+                
     if install_requirements(requirements_file):
         import requests
         from bs4 import BeautifulSoup
