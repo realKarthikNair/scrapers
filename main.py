@@ -181,17 +181,17 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--file', help="File name to save scraped data to \n default is products_data.csv")
     args = parser.parse_args()
     requirements_file = "requirements.txt"
-    if args.url:
-        base_url = args.url
-    else:
-        while True:
-            base_url = input("Enter base URL for product search results: ")
-            # check if base URL is in format https://www.amazon.in/s?k=bags&crid=2M096C61O4MLT&qid=1653308124&sprefix=ba%2Caps%2C283&ref=sr_pg_1
-            # if not check_url(base_url):
-            #     print("Please enter a valid URL")
-            if not base_url:
-                print("Please enter a valid URL")
-                
+    # if args.url:
+    #     base_url = args.url
+    # else:
+    #     while True:
+    #         base_url = input("Enter base URL for product search results: ")
+    #         # check if base URL is in format https://www.amazon.in/s?k=bags&crid=2M096C61O4MLT&qid=1653308124&sprefix=ba%2Caps%2C283&ref=sr_pg_1
+    #         # if not check_url(base_url):
+    #         #     print("Please enter a valid URL")
+    #         if not base_url:
+    #             print("Please enter a valid URL")
+
     if install_requirements(requirements_file):
         import requests
         from bs4 import BeautifulSoup
@@ -200,7 +200,7 @@ if __name__ == "__main__":
         from urllib.parse import urljoin
         base_url = 'https://www.amazon.in/s?k=bags&crid=2M096C61O4MLT&qid=1653308124&sprefix=ba%2Caps%2C283&ref=sr_pg_1'
         user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
-        num_pages = 20
+        num_pages = 2
         scrape_and_save_data(base_url, num_pages)
     else:
         print("Failed to install requirements. Exiting.")
