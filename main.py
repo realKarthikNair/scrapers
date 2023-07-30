@@ -157,6 +157,13 @@ def scrape_and_save_data(base_url, num_pages):
 
 
 if __name__ == "__main__":
+    print("<< Welcome to AmazonScraper by realkarthiknair >>")
+    parser = argparse.ArgumentParser(description = "Scrape Amazon products data from search results and dump to a CSV file")
+    parser.add_argument('-u', '--url', help="Base URL for product search results \n e.g. https://www.amazon.in/s?k=bags&crid=2M096C61O4MLT&qid=1653308124&sprefix=ba%2Caps%2C283&ref=sr_pg_1") # required = True
+    parser.add_argument('-n', '--num-pages', help="Number of pages to scrap")
+    parser.add_argument('-a', '--user-agent', help="user agent string to use for scraping \n default is Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36")
+    parser.add_argument('-f', '--file', help="File name to save scraped data to \n default is products_data.csv")
+    args = parser.parse_args()
     requirements_file = "requirements.txt"  # Replace with the actual path to your requirements.txt file
     if install_requirements(requirements_file):
         import requests
