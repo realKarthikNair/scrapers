@@ -159,18 +159,6 @@ def scrape_and_save_data(base_url, num_pages):
 
     df.to_csv('products_data.csv', index=False)
 
-# This function will be replaced with regex later
-# def check_url(url):
-#     # add https if not present
-#     if not url.startswith('https://'):
-#         url = 'https://' + url
-#     url_b = url1.split("&")[0].split("/")
-#     url_c = url1.split("&")[1].split("&")
-#     if url_b[2] == "www.amazon.in":
-#         if url_b[3][3:].isalphanum() and url_b[3][:2] == "s?":
-#             if url
-  
-
 
 if __name__ == "__main__":
     print("<< Welcome to AmazonScraper by realkarthiknair >>")
@@ -180,17 +168,21 @@ if __name__ == "__main__":
     parser.add_argument('-a', '--user-agent', help="user agent string to use for scraping \n default is Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36")
     parser.add_argument('-f', '--file', help="File name to save scraped data to \n default is products_data.csv")
     args = parser.parse_args()
+
     requirements_file = "requirements.txt"
-    # if args.url:
-    #     base_url = args.url
-    # else:
-    #     while True:
-    #         base_url = input("Enter base URL for product search results: ")
-    #         # check if base URL is in format https://www.amazon.in/s?k=bags&crid=2M096C61O4MLT&qid=1653308124&sprefix=ba%2Caps%2C283&ref=sr_pg_1
-    #         # if not check_url(base_url):
-    #         #     print("Please enter a valid URL")
-    #         if not base_url:
-    #             print("Please enter a valid URL")
+    import re
+    has_strs = lambda string: all(qstr in string for qstr in ["s?k", "&crid", "&sprefix", "&ref"])
+    RePattern = r'^https://www.amazon.in/s\?k=[a-zA-Z0-9+%]+(?:&(?:crid=[a-zA-Z0-9]+|sprefix=[a-zA-Z0-9%_+]+|ref=[a-zA-Z0-9%_]+|qid=[0-9]+))*$'
+    base_url = args.url 
+    while True:
+        if not base_url:
+            base_url = input("Enter base URL for product search results: ")
+        if base_url:
+            if (not has_strs(base_url)) or (not re.match(RePattern, base_url)):
+                print("Please enter a valid URL")
+                base_url = None
+            else:
+                break
 
     if install_requirements(requirements_file):
         import requests
@@ -198,9 +190,8 @@ if __name__ == "__main__":
         import pandas as pd
         import time
         from urllib.parse import urljoin
-        base_url = 'https://www.amazon.in/s?k=bags&crid=2M096C61O4MLT&qid=1653308124&sprefix=ba%2Caps%2C283&ref=sr_pg_1'
         user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
-        num_pages = 2
+        num_pages = 20
         scrape_and_save_data(base_url, num_pages)
     else:
         print("Failed to install requirements. Exiting.")
