@@ -123,7 +123,7 @@ class AmazonScraper:
         }
 
 
-def scrape_and_save_data(base_url, num_pages):
+def scrape_and_save_data(base_url, num_pages, user_agent, file_name):
     """
     Scrapes and saves data to a CSV file
     """
@@ -156,8 +156,14 @@ def scrape_and_save_data(base_url, num_pages):
             
         df = pd.DataFrame(all_data)
    
-
-    df.to_csv('products_data.csv', index=False)
+    if not file_name:
+        # if products_data.csv already exists, append number to it, repeat until a file name is found
+        file_name = "products_data.csv"
+        i = 1
+        while os.path.exists(file_name):
+            file_name = f"products_data({i}).csv"
+            i += 1
+    df.to_csv(file_name, index=False)
 
 
 if __name__ == "__main__":
@@ -190,9 +196,20 @@ if __name__ == "__main__":
         import pandas as pd
         import time
         from urllib.parse import urljoin
-        user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
-        num_pages = 20
-        scrape_and_save_data(base_url, num_pages)
+        if not args.user_agent:
+            user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
+        else:
+            user_agent = args.user_agent
+        if not args.num_pages:
+            while True:
+                try:
+                    num_pages = int(input("Enter number of pages to scrape: "))
+                    break
+                except ValueError:
+                    print("Please enter a valid number")
+        else:
+            num_pages = int(args.num_pages)
+        scrape_and_save_data(base_url, num_pages, user_agent, args.file)
     else:
         print("Failed to install requirements. Exiting.")
         exit(1)
