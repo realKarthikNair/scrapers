@@ -1,6 +1,7 @@
 import subprocess
 import json
 import argparse
+import os
 
 def install_requirements(requirements_file):
     try:
@@ -128,6 +129,14 @@ def scrape_and_save_data(base_url, num_pages, user_agent, file_name):
     Scrapes and saves data to a CSV file
     """
 
+    if not file_name:
+        # if products_data.csv already exists, append number to it, repeat until a file name is found
+        file_name = "products_data.csv"
+        i = 1
+        while os.path.exists(file_name):
+            file_name = f"products_data({i}).csv"
+            i += 1
+
     amazon_scraper = AmazonScraper(base_url, user_agent)
     all_data = [] 
     for page_num in range(1, num_pages + 1):
@@ -153,16 +162,9 @@ def scrape_and_save_data(base_url, num_pages, user_agent, file_name):
                     all_data[-1][key] = None
             
             print(f"Scraped {product_url}")
-            
-        df = pd.DataFrame(all_data)
-   
-    if not file_name:
-        # if products_data.csv already exists, append number to it, repeat until a file name is found
-        file_name = "products_data.csv"
-        i = 1
-        while os.path.exists(file_name):
-            file_name = f"products_data({i}).csv"
-            i += 1
+            df = pd.DataFrame(all_data)
+            df.to_csv(file_name, index=False, mode='a', header=not os.path.exists(file_name))
+
     df.to_csv(file_name, index=False)
 
 
