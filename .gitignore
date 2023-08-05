@@ -1,4 +1,4 @@
 *.pdf
 .~lock*
-# *.csv
+*.csv
 sample_urls.txt
