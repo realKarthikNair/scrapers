@@ -110,10 +110,41 @@ class AmazonScraper:
             description = None
 
         # Find Manufacturer
-        title_block_left_section = soup.find('div', {'id': 'titleBlockLeftSection'})
-        if title_block_left_section:
-            manufacturer_elem = title_block_left_section.find('a', {'id': 'bylineInfo'})
-            manufacturer = manufacturer_elem.get_text().strip().replace('Brand: ', '') if manufacturer_elem else None
+        # title_block_left_section = soup.find('div', {'id': 'titleBlockLeftSection'})
+        # if title_block_left_section:
+        #     manufacturer_elem = title_block_left_section.find('a', {'id': 'bylineInfo'})
+        #     manufacturer = manufacturer_elem.get_text().strip().replace('Brand: ', '') if manufacturer_elem else None
+        # else:
+        #     manufacturer = None
+
+        # esired_div = soup.find('div', {'id': 'productDetails_feature_div'})
+
+        desired_table = soup.find('table', {'class': 'a-keyvalue prodDetTable'})
+        desired_div = soup.find('ul', {'class': 'a-unordered-list a-nostyle a-vertical a-spacing-none detail-bullet-list'})
+        if desired_table:
+            all_rows = desired_table.find_all('tr')
+            for row in all_rows:
+                th = row.find('th', {'class': 'a-color-secondary a-size-base prodDetSectionEntry'})
+                if th and th.text.strip() == 'Manufacturer':
+                    desired_tr = row
+                    break
+            td_value = desired_tr.find('td', {'class': 'a-size-base prodDetAttrValue'}).get_text(strip=True)
+            if td_value:
+                manufacturer = td_value.split(",")[0]
+        
+        elif desired_div:
+            all_li = desired_div.find_all('li')
+            for li in all_li:
+                text_span = li.find('span', {'class': 'a-text-bold'})
+                if text_span and 'Manufacturer' in text_span.get_text():
+                    manufacturer_span = li.find('span', {'class': 'a-list-item'})
+                    if manufacturer_span:
+                        manufacturer = re.sub(r'\s+', ' ', manufacturer_span.get_text()).strip()
+                        break
+            else:
+                manufacturer = None
+            if manufacturer:
+                manufacturer = manufacturer[19:]
         else:
             manufacturer = None
 
