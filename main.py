@@ -41,7 +41,7 @@ class AmazonScraper:
 
 
 
-    def scrape_product_listing_page(self, page_num):
+    def scrape_product_listing_page(self, page_num, sno):
         """
         Scrapes a product listing page and returns a list of product info and product URLs
         """
@@ -51,6 +51,9 @@ class AmazonScraper:
 
         for item in soup.find_all('div', {'data-component-type': 's-search-result'}):
             product = {}
+
+            product['sno'] = sno
+            sno += 1
 
             title_tag = item.find('h2', class_='a-size-mini')
             if title_tag:
@@ -74,7 +77,7 @@ class AmazonScraper:
         # with open('products.json', 'w') as f:
         #     json.dump(products, f, indent=4)
 
-        return products
+        return products, sno
 
     
     def scrape_product_page(self, url):
@@ -85,10 +88,7 @@ class AmazonScraper:
 
         if not soup:
             return None
-
-        # description_elem = soup.find('div', {'id': 'productDescription'})
-        # description = description_elem.get_text().strip() if description_elem else None
-
+        
         # Find ASIN
         asin_elem = soup.find('div', {'id': 'acBadge_feature_div'})
         asin = None
@@ -170,24 +170,31 @@ def scrape_and_save_data(base_url, num_pages, user_agent, file_name):
 
     amazon_scraper = AmazonScraper(base_url, user_agent)
     all_data = [] 
+    sno = 1
     for page_num in range(1, num_pages + 1):
-         
-        products_data = amazon_scraper.scrape_product_listing_page(page_num)
+        products_data = amazon_scraper.scrape_product_listing_page(page_num, sno)
+        sno = products_data[1]
 
-        # product_data is a list with each element being a dictionary of product info. url key has the product URL
-        
-        for i in products_data:
+        # products_data is a list with each element being a dictionary of product info. url key has the product URL
+        count = 0
+        for i in products_data[0]:
 
-            if i['num_reviews'] == "M.R.P:": 
+            try: 
+                if i['num_reviews'] == "M.R.P:": 
+                    i['num_reviews'] = None
+            except:
                 i['num_reviews'] = None
-            
-            if i['price'] != None:
-                i['price'] = int(i['price'].replace(',', ''))
+
+            try:
+                if i['price'] != None:
+                    i['price'] = int(i['price'].replace(',', ''))
+            except:
+                i['price'] = None
 
             product_url = i['url']
             product_data = amazon_scraper.scrape_product_page(product_url)
-            all_data.append({**i, **product_data})
-            # replace any empty values with None
+            product_data['url'] = product_url
+            all_data.append({**{k: v for k, v in i.items() if k in ['sno','name', 'rating', 'price', 'num_reviews']}, **product_data})
             for key, value in all_data[-1].items():
                 if value == '':
                     all_data[-1][key] = None
@@ -195,8 +202,9 @@ def scrape_and_save_data(base_url, num_pages, user_agent, file_name):
             print(f"Scraped {product_url}")
             df = pd.DataFrame(all_data)
             df.to_csv(file_name, index=False, mode='a', header=not os.path.exists(file_name))
-
-    df.to_csv(file_name, index=False)
+            count+= 1
+            all_data = []
+            print(f"Page: {page_num}, Product: {count}/{len(products_data[0])}")
 
 
 if __name__ == "__main__":
