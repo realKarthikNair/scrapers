@@ -120,32 +120,34 @@ class AmazonScraper:
         # esired_div = soup.find('div', {'id': 'productDetails_feature_div'})
 
         desired_table = soup.find('table', {'class': 'a-keyvalue prodDetTable'})
-        desired_div = soup.find('ul', {'class': 'a-unordered-list a-nostyle a-vertical a-spacing-none detail-bullet-list'})
-        if desired_table:
-            all_rows = desired_table.find_all('tr')
-            for row in all_rows:
-                th = row.find('th', {'class': 'a-color-secondary a-size-base prodDetSectionEntry'})
-                if th and th.text.strip() == 'Manufacturer':
-                    desired_tr = row
-                    break
-            td_value = desired_tr.find('td', {'class': 'a-size-base prodDetAttrValue'}).get_text(strip=True)
-            if td_value:
-                manufacturer = td_value.split(",")[0]
-        
-        elif desired_div:
-            all_li = desired_div.find_all('li')
-            for li in all_li:
-                text_span = li.find('span', {'class': 'a-text-bold'})
-                if text_span and 'Manufacturer' in text_span.get_text():
-                    manufacturer_span = li.find('span', {'class': 'a-list-item'})
-                    if manufacturer_span:
-                        manufacturer = re.sub(r'\s+', ' ', manufacturer_span.get_text()).strip()
+        try:
+            desired_div = soup.find('ul', {'class': 'a-unordered-list a-nostyle a-vertical a-spacing-none detail-bullet-list'})
+            if desired_table:
+                all_rows = desired_table.find_all('tr')
+                for row in all_rows:
+                    th = row.find('th', {'class': 'a-color-secondary a-size-base prodDetSectionEntry'})
+                    if th and th.text.strip() == 'Manufacturer':
+                        desired_tr = row
                         break
+                if desired_tr: 
+                    td_value = desired_tr.find('td', {'class': 'a-size-base prodDetAttrValue'}).get_text(strip=True)
+                if td_value:
+                    manufacturer = td_value.split(",")[0]
+            
+            elif desired_div or manufacturer == None:
+                all_li = desired_div.find_all('li')
+                for li in all_li:
+                    text_span = li.find('span', {'class': 'a-text-bold'})
+                    if text_span and 'Manufacturer' in text_span.get_text():
+                        manufacturer_span = li.find('span', {'class': 'a-list-item'})
+                        if manufacturer_span:
+                            manufacturer = re.sub(r'\s+', ' ', manufacturer_span.get_text()).strip()
+                            break
+                if manufacturer:
+                    manufacturer = manufacturer[19:]
             else:
                 manufacturer = None
-            if manufacturer:
-                manufacturer = manufacturer[19:]
-        else:
+        except:
             manufacturer = None
 
         return {
