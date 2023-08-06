@@ -63,6 +63,8 @@ class AmazonScraper:
             rating_tag = item.find('span', class_='a-icon-alt')
             if rating_tag:
                 product['rating'] = rating_tag.text.split()[0]
+            else:
+                product['rating'] = "Unavailable"
 
             price_tag = item.find('span', class_='a-price')
             if price_tag:
@@ -77,6 +79,13 @@ class AmazonScraper:
         # with open('products.json', 'w') as f:
         #     json.dump(products, f, indent=4)
 
+        # for i in products:
+        #     for key, value in i.items():
+        #         # print(i["sno"])
+        #         # print(i["num_reviews"])
+        #         # print(type(i["num_reviews"]))
+        #         if value == '' or value == None:
+        #             i[key] = "Unavailable"
         return products, sno
 
     
@@ -100,14 +109,14 @@ class AmazonScraper:
             else:
                 asin = None
         else:
-            asin = None
+            asin = "Unavailable"
 
         # Find Description
         description_elem = soup.find('div', {'id': 'productDescription'})
         if description_elem:
             description = description_elem.get_text().strip()
         else:
-            description = None
+            description = "Unavailable"
 
         # Find Manufacturer
         # title_block_left_section = soup.find('div', {'id': 'titleBlockLeftSection'})
@@ -146,9 +155,9 @@ class AmazonScraper:
                 if manufacturer:
                     manufacturer = manufacturer[19:]
             else:
-                manufacturer = None
+                manufacturer = "Unavailable"
         except:
-            manufacturer = None
+            manufacturer = "Unavailable"
 
         return {
             'Description': description,
@@ -183,30 +192,30 @@ def scrape_and_save_data(base_url, num_pages, user_agent, file_name):
 
             try: 
                 if i['num_reviews'] == "M.R.P:": 
-                    i['num_reviews'] = None
+                    i['num_reviews'] = "Unavailable"
             except:
-                i['num_reviews'] = None
+                i['num_reviews'] = "Unavailable"
 
             try:
                 if i['price'] != None:
                     i['price'] = int(i['price'].replace(',', ''))
             except:
-                i['price'] = None
+                i['price'] = "Unavailable"
 
             product_url = i['url']
             product_data = amazon_scraper.scrape_product_page(product_url)
             product_data['url'] = product_url
             all_data.append({**{k: v for k, v in i.items() if k in ['sno','name', 'rating', 'price', 'num_reviews']}, **product_data})
-            for key, value in all_data[-1].items():
-                if value == '':
-                    all_data[-1][key] = None
+            for item in all_data:
+                for key, value in item.items():
+                    if value is None or value == "" or value == {}:
+                        item[key] = "unavailable"
             
-            print(f"Scraped {product_url}")
             df = pd.DataFrame(all_data)
             df.to_csv(file_name, index=False, mode='a', header=not os.path.exists(file_name))
             count+= 1
             all_data = []
-            print(f"Page: {page_num}, Product: {count}/{len(products_data[0])}")
+            print(f"Page: {page_num}/{num_pages}, Product: {count}/{len(products_data[0])}")
 
 
 if __name__ == "__main__":
