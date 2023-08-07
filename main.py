@@ -4,12 +4,18 @@ import argparse
 import os
 
 def install_requirements(requirements_file):
-    try:
-        subprocess.check_call(['pip', 'install', '-r', requirements_file])
-        print("Requirements installed successfully.")
-        return True
-    except subprocess.CalledProcessError:
-        print("Failed to install requirements.")
+    # if req_installed.txt is not found
+    if not os.path.exists('req_installed.txt'):
+        try:
+            subprocess.check_call(['pip', 'install', '-r', requirements_file])
+            print("Requirements installed successfully.")
+            # create req_installed.txt
+            with open('req_installed.txt', 'w') as f:
+                f.write("1")
+            return True
+        except subprocess.CalledProcessError:
+            print("Failed to install requirements."); exit(1)
+    return True
 
 class AmazonScraper:
 
@@ -208,7 +214,7 @@ def scrape_and_save_data(base_url, num_pages, user_agent, file_name):
             all_data.append({**{k: v for k, v in i.items() if k in ['sno','name', 'rating', 'price', 'num_reviews']}, **product_data})
             for item in all_data:
                 for key, value in item.items():
-                    if value is None or value == "" or value == {}:
+                    if (value is None) or (value == "") or (value == "{}"):
                         item[key] = "unavailable"
             
             df = pd.DataFrame(all_data)
