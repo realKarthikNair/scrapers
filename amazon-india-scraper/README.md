@@ -34,7 +34,7 @@ cd amazon-scrapper
    python amazon_scraper.py -u <base_url> -n <num_pages> -a <user_agent> -f <csv_file_name>
     ```
 
-[This](https://github.com/realKarthikNair/amazon-scrapper/blob/master/products_data.csv) file is the output of
+[This](products_data.csv) file is the output of
 
 ```
 python main.py -u "https://www.amazon.in/s?k=mouse&crid=39QCIRY4VLJHD&sprefix=mouse%2Caps%2C208&ref=nb_sb_noss_1" -n 3
