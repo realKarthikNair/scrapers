@@ -1,7 +1,6 @@
 *.pdf
 .~lock*
 *.csv
-sample_urls.txt
 req_installed.txt
 temp.py
 *.pyc
